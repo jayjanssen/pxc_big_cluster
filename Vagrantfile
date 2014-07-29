@@ -16,7 +16,7 @@ $pxc_instance_size = 'm3.large'
 $tester_instance_size = 'c3.large'
 $security_groups = ['default','pxc']
 
-nodes = 3;
+nodes = 10
 $node_array = (1..nodes).collect{ |i| 'node' + i.to_s }
 $cluster_address = "gcomm://" + $node_array.join(',')
 	
@@ -47,25 +47,19 @@ Vagrant.configure("2") do |config|
 					'innodb_flush_log_at_trx_commit' => '0',
 					'pxc_bootstrap_node'				=> (node_name == 'node1' ? true : false),
 					'extra_mysqld_config'				=>
-						'wsrep_provider_options=ist.recv_addr="' + node_name + "\"\n" +
+						'wsrep_provider_options="gcs.fc_limit=2048;ist.recv_addr="' + node_name + "\"\n" +
 						'wsrep_sst_receive_address=' + node_name + "\n" +
 						'wsrep_node_address=' + node_name + "\n" +
 						'wsrep_cluster_address=' + $cluster_address +
 						"\n"
 				}
 		  }
-		  provision_puppet( node_config, "pxc_client.pp" ) { |puppet|
-				puppet.facter = {
-					"percona_server_version"	=> $mysql_version,
-				}
-		  }
 		  provision_puppet( node_config, "percona_toolkit.pp" )
 		  provision_puppet( node_config, "myq_gadgets.pp" )
-				
-		  provision_puppet( node_config, "sysbench.pp" )
-				
+
 			# Setup a sysbench environment and test user on node1
 			if node_name == 'node1'
+			  provision_puppet( node_config, "sysbench.pp" )
 			  provision_puppet( node_config, "sysbench_load.pp" ) { |puppet|
 					puppet.facter = {
 						'tables' => 1,
@@ -77,7 +71,7 @@ Vagrant.configure("2") do |config|
 			end
 	  
 		  # Provider -- aws only
-			provider_aws( "PXC big_cluster #{node_name}", node_config, $pxc_instance_size, $region, $security_groups ) { |aws, override|
+			provider_aws( "PXC big_cluster #{node_name}", node_config, $pxc_instance_size, $region, $security_groups, hostmanager_aws_ips ) { |aws, override|
 				aws.block_device_mapping = [
 					{
 						'DeviceName' => "/dev/sdb",

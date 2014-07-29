@@ -1,0 +1,23 @@
+
+
+sysbench --db-driver=mysql --test=sysbench_tests/db/update_index.lua --mysql-user=test --mysql-password=test --oltp-table-size=1000000 --report-interval=1 --max-requests=0 --max-time=60 run
+cd .
+
+1 node
+    read/write requests:                 174536 (2908.93 per sec.)
+2 nodes
+    read/write requests:                 89108  (1485.12 per sec.)
+		
+3 nodes
+    read/write requests:                 68910  (1148.50 per sec.)
+		
+4	1046.49
+5 922
+6 896
+
+10 608
+
+20 nodes
+
+
+sysbench --db-driver=mysql --test=sysbench_tests/db/update_index.lua --mysql-user=test --mysql-password=test --oltp-table-size=1000000 --report-interval=1 --max-requests=0 --max-time=60 --num-threads=20 run
